@@ -1,0 +1,40 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: mvn install check
+      id: mvn-install-check
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: mvn install check
+        setup-command: ''
+        command: mvn install
+        timeout: 10
+        max-score: 25
+    - name: mvn test check
+      id: mvn-test-check
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: mvn test check
+        setup-command: ''
+        command: mvn test
+        timeout: 10
+        max-score: 75
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        MVN-INSTALL-CHECK_RESULTS: "${{steps.mvn-install-check.outputs.result}}"
+        MVN-TEST-CHECK_RESULTS: "${{steps.mvn-test-check.outputs.result}}"
+      with:
+        runners: mvn-install-check,mvn-test-check
